@@ -9,12 +9,10 @@ pub mod env {
     pub const QUERY_ENV_VAR: &str = "QUERY";
 }
 
-// pub const BUCKET_DATA: &str = "test-data-platform-eu-central-1";
-// pub const PREFIX_DATA: &str = "dev/data-lake/backend-fusion/data/";
-pub const BUCKET_TARGET: &str = "test-data-platform-eu-central-1";
-pub const PREFIX_TARGET: &str = "dev/data-lake/backend-fusion/result/";
+pub const BUCKET_TARGET: &str = "bucket";
+pub const PREFIX_TARGET: &str = "prefix";
 pub const REGION: &str = "eu-central-1";
-pub const TABLE: &str = "images";
+pub const TABLE: &str = "table";
 pub const URL: &str = "localhost:50050";
 pub const CHUNK_SIZE: u64 = 10_000_000; // 10 MiB
 pub const PARALLEL_THRESHOLD: u64 = 300_000_000; // 300 MiB
