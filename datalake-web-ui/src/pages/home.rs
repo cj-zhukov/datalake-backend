@@ -15,8 +15,8 @@ struct ApiRequest {
 
 #[derive(Debug, Deserialize)]
 struct ApiResponse {
-    pub result_parquet: Value,
-    pub result_json: Value,
+    result_parquet: Value,
+    result_json: Value,
 }
 
 #[component]

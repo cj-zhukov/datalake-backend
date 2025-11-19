@@ -33,7 +33,7 @@ pub fn Docs() -> impl IntoView {
             <h1>"📘 Documentation"</h1>
 
         // query Examples
-            <section>
+        <section>
             <h2>"Example Queries"</h2>
             {
             view! {
@@ -49,72 +49,7 @@ pub fn Docs() -> impl IntoView {
             }
         }
         </section>
-
-        // Object Store Table Schema
-        <section>
-            <h2>"Object Store Schema"</h2>
-            <table style="width: 100%; border-collapse: collapse; border: 1px solid #ccc;">
-                <thead>
-                    <tr>
-                        <th style="border: 1px solid #ccc; padding: 0.5rem;">Column</th>
-                        <th style="border: 1px solid #ccc; padding: 0.5rem;">Type</th>
-                        <th style="border: 1px solid #ccc; padding: 0.5rem;">Description</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td style="border: 1px solid #ccc; padding: 0.5rem;">file_name</td>
-                        <td style="border: 1px solid #ccc; padding: 0.5rem;">TEXT</td>
-                        <td style="border: 1px solid #ccc; padding: 0.5rem;">name of the file</td>
-                    </tr>
-                    <tr>
-                        <td style="border: 1px solid #ccc; padding: 0.5rem;">file_type</td>
-                        <td style="border: 1px solid #ccc; padding: 0.5rem;">TEXT</td>
-                        <td style="border: 1px solid #ccc; padding: 0.5rem;">extension of the file</td>
-                    </tr>
-                    <tr>
-                        <td style="border: 1px solid #ccc; padding: 0.5rem;">file_size</td>
-                        <td style="border: 1px solid #ccc; padding: 0.5rem;">INTEGER</td>
-                        <td style="border: 1px solid #ccc; padding: 0.5rem;">size of the file in KB</td>
-                    </tr>
-                    <tr>
-                        <td style="border: 1px solid #ccc; padding: 0.5rem;">file_path</td>
-                        <td style="border: 1px solid #ccc; padding: 0.5rem;">TEXT</td>
-                        <td style="border: 1px solid #ccc; padding: 0.5rem;">path to the file in S3</td>
-                    </tr>
-                    <tr>
-                        <td style="border: 1px solid #ccc; padding: 0.5rem;">file_url</td>
-                        <td style="border: 1px solid #ccc; padding: 0.5rem;">TEXT</td>
-                        <td style="border: 1px solid #ccc; padding: 0.5rem;">url of the file in S3</td>
-                    </tr>
-                    <tr>
-                        <td style="border: 1px solid #ccc; padding: 0.5rem;">order_id</td>
-                        <td style="border: 1px solid #ccc; padding: 0.5rem;">TEXT</td>
-                        <td style="border: 1px solid #ccc; padding: 0.5rem;">case name or order name</td>
-                    </tr>
-                    <tr>
-                        <td style="border: 1px solid #ccc; padding: 0.5rem;">study</td>
-                        <td style="border: 1px solid #ccc; padding: 0.5rem;">TEXT</td>
-                        <td style="border: 1px solid #ccc; padding: 0.5rem;">HMC | AH | angie_restorative_data_collection_study_US | 32clinic | Hadassah_scans</td>
-                    </tr>
-                    <tr>
-                        <td style="border: 1px solid #ccc; padding: 0.5rem;">dt</td>
-                        <td style="border: 1px solid #ccc; padding: 0.5rem;">TEXT</td>
-                        <td style="border: 1px solid #ccc; padding: 0.5rem;">date and time of the case</td>
-                    </tr>
-                    <tr>
-                        <td style="border: 1px solid #ccc; padding: 0.5rem;">scanner_type</td>
-                        <td style="border: 1px solid #ccc; padding: 0.5rem;">TEXT</td>
-                        <td style="border: 1px solid #ccc; padding: 0.5rem;">5D | NG</td>
-                    </tr>
-                    <tr>
-                        <td style="border: 1px solid #ccc; padding: 0.5rem;">data_type</td>
-                        <td style="border: 1px solid #ccc; padding: 0.5rem;">TEXT</td>
-                        <td style="border: 1px solid #ccc; padding: 0.5rem;">rnd (default) | vnv</td>
-                    </tr>
-                </tbody>
-            </table>
-        </section>
+        
         </div>
     }
 }

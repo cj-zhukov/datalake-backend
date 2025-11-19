@@ -9,14 +9,13 @@ pub fn SelectResult(url: ReadSignal<Option<String>>) -> impl IntoView {
     let (error, set_error) = signal(None::<String>);
     let (loading, set_loading) = signal(false);
 
-    create_effect(move |_| {
+    Effect::new(move |_| {
         if let Some(url) = url.get() {
             log!("Fetching table-data NDJSON: {}", url);
             set_loading.set(true);
             set_error.set(None);
 
             spawn_local(async move {
-                // 1. Fetch FILE AS TEXT
                 let text = match Request::get(&url).send().await {
                     Ok(resp) => match resp.text().await {
                         Ok(t) => { 
@@ -36,7 +35,6 @@ pub fn SelectResult(url: ReadSignal<Option<String>>) -> impl IntoView {
                     }
                 };
 
-                // 2. NDJSON PARSE (fixed!)
                 let mut parsed_rows = Vec::new();
 
                 for (i, line) in text.lines().enumerate() {
@@ -69,7 +67,6 @@ pub fn SelectResult(url: ReadSignal<Option<String>>) -> impl IntoView {
                     }
                 }
 
-                // 3. SUCCESS
                 set_rows.set(parsed_rows);
                 set_loading.set(false);
             });
