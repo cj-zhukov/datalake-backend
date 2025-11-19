@@ -20,8 +20,18 @@ pub enum PathParserError {
 pub struct ParseredTablePath(Url);
 
 impl ParseredTablePath {
-    pub fn new(input: &str) -> Result<Self, PathParserError> {
-        validate_table_path(input)
+    pub fn new(path: &str) -> Result<Self, PathParserError> {
+        let cleaned = path.trim_matches(&['\'', '"'][..]).trim();
+        let url = Url::parse(cleaned)
+            .map_err(|e| PathParserError::ParseError(e.to_string()))?;
+
+        if url.scheme() != "s3" {
+            return Err(PathParserError::InvalidScheme);
+        }
+        if url.host_str().is_none() {
+            return Err(PathParserError::MissingBucket);
+        }
+        Ok(Self(url))
     }
 }
 
@@ -31,32 +41,19 @@ impl AsRef<str> for ParseredTablePath {
     }
 }
 
-/// Parse, check and valadate given table path
-pub fn validate_table_path(path: &str) -> Result<ParseredTablePath, PathParserError> {
-    let cleaned = path.trim_matches(&['\'', '"'][..]).trim();
-    let url = Url::parse(cleaned)
-        .map_err(|e| PathParserError::ParseError(e.to_string()))?;
-
-    if url.scheme() != "s3" {
-        return Err(PathParserError::InvalidScheme);
+impl ParseredTablePath {
+    pub fn extract_table_name(&self) -> Result<String, PathParserError> {
+        let url = &self.0;
+        let key = url.path().trim_matches('/');
+        let bucket = url.host_str().ok_or(PathParserError::MissingBucket)?;
+        let table_name = if key.is_empty() {
+            // no path -> use bucket name instead
+            bucket
+        } else {
+            key.split('/').next_back().ok_or(PathParserError::MissingTableName)?
+        };
+        Ok(table_name.to_string())
     }
-    if url.host_str().is_none() {
-        return Err(PathParserError::MissingBucket);
-    }
-    Ok(ParseredTablePath(url))
-}
-
-pub fn extract_table_name(path: &ParseredTablePath) -> Result<String, PathParserError> {
-    let url = &path.0;
-    let key = url.path().trim_matches('/');
-    let bucket = url.host_str().ok_or(PathParserError::MissingBucket)?;
-    let table_name = if key.is_empty() {
-        // no path -> use bucket name instead
-        bucket
-    } else {
-        key.split('/').last().ok_or(PathParserError::MissingTableName)?
-    };
-    Ok(table_name.to_string())
 }
 
 #[cfg(test)]
@@ -82,7 +79,7 @@ mod tests {
         #[case] input: &str,
         #[case] expected: Result<&str, PathParserError>,
     ) {
-        let result = validate_table_path(input);
+        let result = ParseredTablePath::new(input);
 
         match (result, expected) {
             (Ok(parsed), Ok(expected_url)) => {
@@ -96,7 +93,6 @@ mod tests {
             }
         }
     }
-
 
     #[rstest]
     #[case("'s3://bucket/path-to-data/'", Ok("path-to-data".to_string()))]
@@ -115,9 +111,9 @@ mod tests {
         #[case] input: &str,
         #[case] expected: Result<String, PathParserError>,
     ) {
-        let validated = validate_table_path(input);
+        let validated = ParseredTablePath::new(input);
         let result = match validated {
-            Ok(valid) => extract_table_name(&valid),
+            Ok(valid) => valid.extract_table_name(),
             Err(e) => Err(e),
         };
         assert_eq!(result, expected);

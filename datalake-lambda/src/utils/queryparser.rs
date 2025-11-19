@@ -48,7 +48,7 @@ fn prepare_query_worker(ast: &mut [Statement]) -> Result<QueryParsered, QueryPar
     if let Some(Statement::Query(query)) = ast.get_mut(0) {
         let table_name = match &*query.body {
             SetExpr::Select(select) => {
-                if let Some(from_table) = select.from.get(0) {
+                if let Some(from_table) = select.from.first() {
                     match &from_table.relation {
                         TableFactor::Table { name, .. } => Some(name.to_string()),
                         _ => None,
@@ -97,7 +97,7 @@ pub fn replace_table_name(query: &str, table_name: &str) -> String {
         let prefix = &query[..quote_pos];
         let rest = &query[start..];
         let end_quote_idx = rest
-            .find(|c| c == '\'' || c == '"')
+            .find(['\'', '"'])
             .map(|idx| start + idx + 1)
             .unwrap_or(query.len());
 

@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 use crate::error::ApiError;
 use crate::routes::query;
 use crate::routes::route::ApiRoute;
-use crate::utils::pathparser::{extract_table_name, validate_table_path};
+use crate::utils::pathparser::ParseredTablePath;
 use crate::utils::queryparser::{prepare_query, replace_table_name};
 
 pub enum ApiResponseKind {
@@ -117,9 +117,6 @@ pub async fn handler(
         }
     };
 
-    // #TODO
-    // s3 path is not valid -> 404
-    // s3 path is valid but no parquet found -> 404
     let (query, table_path) = match serde_json::from_str::<Query>(&body) {
         Ok(query) => {
             match prepare_query(&query.query) {
@@ -136,7 +133,7 @@ pub async fn handler(
         }
     };
 
-    let table_path = match validate_table_path(&table_path) {
+    let table_path = match ParseredTablePath::new(&table_path) {
         Ok(name) => name,
         Err(e) => {
             tracing::error!("{e}, query: {body}");
@@ -144,8 +141,10 @@ pub async fn handler(
         }
     };
 
-    let table_name = match extract_table_name(&table_path) {
-        Ok(name) => name,
+    // #TODO check if s3 path contains parquet files?
+
+    let table_name = match &table_path.extract_table_name() {
+        Ok(name) => name.to_string(),
         Err(e) => {
             tracing::error!("{e}, query: {body}");
             return ApiResponseKind::BadRequest.try_into();
