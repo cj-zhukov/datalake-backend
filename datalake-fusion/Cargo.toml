@@ -1,0 +1,22 @@
+[package]
+name = "datalake-fusion"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+aws-config = "1"
+aws-sdk-s3 = "1"
+aws-creds = "0.37"
+datafusion = "49.0.2"
+ballista = "49.0.0"
+ballista-core = "49.0.0"
+bytes = "1"
+color-eyre = "0.6"
+dotenvy = "0.15.7"
+tokio = { version = "1", features= ["full"] }
+tokio-stream = "0.1"
+# tokio-util = { version = "0.7", features = ["full"] }
+thiserror = "2"
+# tracing = "0.1.40"
+# tracing-subscriber = { version = "0.3.18", features = ["json"] }
+# tracing-timing = "0.6"

@@ -1,0 +1,59 @@
+openapi: 3.0.3
+info:
+  title: Datalake Query API
+  version: 1.0.0
+  description: |
+    API for querying data stored in S3-compatible object storage.
+    Returns pre-signed URLs to a Parquet file and a JSON file.
+
+servers:
+  - url: https://wg4w0o8cad.execute-api.eu-central-1.amazonaws.com/test
+    description: Test API
+
+paths:
+  /query:
+    post:
+      summary: Execute query and return result URLs
+      operationId: executeQuery
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QueryRequest"
+      responses:
+        "200":
+          description: Successfully created query result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QueryResponse"
+        "400":
+          description: Invalid input
+        "500":
+          description: Internal server error
+
+components:
+  schemas:
+    QueryRequest:
+      type: object
+      required:
+        - query
+      properties:
+        query:
+          type: string
+          example: "SELECT * FROM 's3://bucket/data/' LIMIT 10"
+
+    QueryResponse:
+      type: object
+      properties:
+        result_parquet:
+          type: string
+          format: uri
+          description: Pre-signed S3 URL to Parquet result
+          example: "https://s3.amazonaws.com/bucket/result.parquet?X-Amz-Signature=..."
+        result_json:
+          type: string
+          format: uri
+          description: Pre-signed S3 URL to JSON visualization result
+          example: "https://s3.amazonaws.com/bucket/result.json?X-Amz-Signature=..."

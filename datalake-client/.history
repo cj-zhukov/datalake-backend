@@ -1,0 +1,10 @@
+#V2
+select * from result.parquet limit 10;
+select * from 'result.parquet' limit 10;
+\\q
+select * exclude(data_val) from 'result.parquet' limit 10;
+\\q
+select * exclude(data_val) from 'result.parquet' limit 10;
+\\q
+select * exclude(data_val) from 'result.parquet' limit 10;
+\\q

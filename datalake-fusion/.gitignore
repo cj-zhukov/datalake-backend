@@ -1,0 +1,26 @@
+.vscode
+.idea/
+.pytest_cache/
+pkgs
+docker_cache
+.gdb_history
+*.orig
+.*.swp
+.*.swo
+*.pending-snap
+
+venv/*
+
+# macOS
+.DS_Store
+
+# docker volumes used for caching
+.docker
+
+# Rust
+target
+
+rusty-tags.vi
+.history
+.flatbuffers/
+

@@ -1,0 +1,10 @@
+pub const REGION: &str = "eu-central-1";
+pub const DATA_BUCKET: &str = "test-data-platform-eu-central-1";
+pub const DATA_PREFIX: &str = "dev/data-lake/backend-fusion/result/"; // prefix for parquet
+pub const PRESIGNED_TIMEOUT: u64 = 3600; // url is available for 1 hour
+pub const MAX_ROWS: u64 = 1000;
+pub const CLUSTER: &str = "dmg-ecs-cluster";
+pub const SUBNETS: [&str; 2] = ["subnet-59020724", "subnet-893f37c4"];
+pub const SECURITY_GROUPS: [&str; 1] = ["sg-1f575e7f"];
+pub const CONTAINER_NAME: &str = "datalake-fusion";
+pub const TASK_NAME: &str = "datalake-fusion-run-dev";
