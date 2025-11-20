@@ -14,6 +14,7 @@ use crate::error::ApiError;
 use crate::routes::query;
 use crate::routes::route::ApiRoute;
 use crate::utils::pathparser::ParseredTablePath;
+use crate::utils::pathvalidator::path_validator;
 use crate::utils::queryparser::{prepare_query, replace_table_name};
 
 pub enum ApiResponseKind {
@@ -134,14 +135,25 @@ pub async fn handler(
     };
 
     let table_path = match ParseredTablePath::new(&table_path) {
-        Ok(name) => name,
+        Ok(v) => v,
         Err(e) => {
             tracing::error!("{e}, query: {body}");
             return ApiResponseKind::BadRequest.try_into();
         }
     };
 
-    // #TODO check if s3 path contains parquet files?
+    let is_valid = match path_validator(&table_path, &state.client).await {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("{e}, query: {body}");
+            return ApiResponseKind::BadRequest.try_into();
+        }
+    };
+
+    if !is_valid {
+        tracing::error!("invalid path: {}, query: {body}", table_path.as_ref());
+        return ApiResponseKind::BadRequest.try_into();
+    }
 
     let table_name = match &table_path.extract_table_name() {
         Ok(name) => name.to_string(),

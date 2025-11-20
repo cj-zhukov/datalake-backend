@@ -17,40 +17,44 @@ pub enum PathParserError {
 }
 
 #[derive(Debug)]
-pub struct ParseredTablePath(Url);
+pub struct ParseredTablePath {
+    pub url: Url,
+    pub bucket: String,
+    pub prefix: Option<String>,
+}
 
 impl ParseredTablePath {
     pub fn new(path: &str) -> Result<Self, PathParserError> {
         let cleaned = path.trim_matches(&['\'', '"'][..]).trim();
         let url = Url::parse(cleaned)
             .map_err(|e| PathParserError::ParseError(e.to_string()))?;
-
         if url.scheme() != "s3" {
             return Err(PathParserError::InvalidScheme);
         }
-        if url.host_str().is_none() {
-            return Err(PathParserError::MissingBucket);
-        }
-        Ok(Self(url))
+        let bucket = url.host_str().ok_or(PathParserError::MissingBucket)?.to_string();
+        let prefix = url.path()
+            .strip_prefix('/')
+            .filter(|s| !s.is_empty())
+            .map(String::from);
+        Ok(Self{ url, bucket, prefix })
     }
 }
 
 impl AsRef<str> for ParseredTablePath {
     fn as_ref(&self) -> &str {
-        self.0.as_str()
+        self.url.as_str()
     }
 }
 
 impl ParseredTablePath {
     pub fn extract_table_name(&self) -> Result<String, PathParserError> {
-        let url = &self.0;
-        let key = url.path().trim_matches('/');
-        let bucket = url.host_str().ok_or(PathParserError::MissingBucket)?;
-        let table_name = if key.is_empty() {
-            // no path -> use bucket name instead
-            bucket
-        } else {
-            key.split('/').next_back().ok_or(PathParserError::MissingTableName)?
+        let bucket = &self.bucket;
+        let table_name = match &self.prefix {
+            Some(v) => {
+                let key = v.trim_matches('/');
+                key.split('/').next_back().ok_or(PathParserError::MissingTableName)?
+            },
+            None => bucket,
         };
         Ok(table_name.to_string())
     }

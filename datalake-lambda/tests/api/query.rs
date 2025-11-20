@@ -34,8 +34,8 @@ async fn should_return_400_if_invalid_input() {
 async fn should_return_400_if_valid_input() {
     let app = TestApp::new(ADDRESS.to_string());
     let input = serde_json::json!({
-        "query": format!("select * from 's3://path-to-data-doesn't-exist' limit 10"), // invalid path
+        "query": format!("select * from 's3://path-to-data-does-not-exist' limit 10"), // invalid s3 path
     });
     let response = app.post_query(&input).await;
-    assert_eq!(response.status().as_u16(), 400); //#TODO maybe check if path-to-data exists and return 404 instead of client error?
+    assert_eq!(response.status().as_u16(), 400); 
 }
