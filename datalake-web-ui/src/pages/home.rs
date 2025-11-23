@@ -15,8 +15,8 @@ struct ApiRequest {
 
 #[derive(Debug, Deserialize)]
 struct ApiResponse {
-    result_parquet: Value,
-    result_json: Value,
+    pub _result_parquet: Value, //#TODO
+    pub result_json: Value,
 }
 
 #[component]
@@ -24,9 +24,8 @@ pub fn Home() -> impl IntoView {
     let (query, set_query) = signal("select * from 's3://bucket/path-to-data/' limit 1000".to_string());
     let (mode, set_mode) = signal(Mode::Select); // mode
     let (is_loading, set_is_loading) = signal(false); // spinner
-    let (result, set_result) = signal(None::<String>); // select result tabular format from select opeation
-    let (url, set_url) = signal(None::<String>); // presigned url for download parquet
-    // let (url_json, set_url_json) = signal(None::<String>); // presigned url for json
+    let (_result, set_result) = signal(None::<String>); // select result tabular format from select opeation
+    let (url, set_url) = signal(None::<String>); 
     let (error, set_error) = signal(None::<String>); // error msg
 
     let send_request = move |_| {
@@ -86,14 +85,15 @@ pub fn Home() -> impl IntoView {
                 Mode::Select => {
                     match response.json::<ApiResponse>().await {
                         Ok(resp) => {
-                            // let presigned_url = resp.result_json.to_string();
                             let presigned_url = resp
                                 .result_json
                                 .as_str()
                                 .expect("result_json is not a string")
                                 .to_string();
+
                             log!("Presigned url received: {}", presigned_url);
                             log!("Start polling");
+
                             spawn_local(async move {
                                 loop {
                                     let Ok(resp) = Request::get(&presigned_url).send().await else {
@@ -105,7 +105,6 @@ pub fn Home() -> impl IntoView {
                                     if resp.ok() {
                                         log!("Presigned URL is ready");
                                         set_url.set(Some(presigned_url));
-                                        set_is_loading.set(false);
                                         break;
                                     }
                                 }
@@ -116,7 +115,6 @@ pub fn Home() -> impl IntoView {
                             set_error.set(Some(format!("Failed to parse response: {e}")));
                         }
                     }
-                    set_is_loading.set(false);
                 }
                 _ => unimplemented!()
                 // Mode::Download => match response.json::<ApiResponse>().await {
@@ -131,7 +129,6 @@ pub fn Home() -> impl IntoView {
                 //                     TimeoutFuture::new(1000).await;
                 //                     continue;
                 //                 };
-
                 //                 if resp.ok() {
                 //                     log!("Presigned URL is ready");
                 //                     set_url.set(Some(presigned_url));
@@ -220,7 +217,7 @@ pub fn Home() -> impl IntoView {
             
             // select result
             <Show when=move || mode.get() == Mode::Select>
-                <SelectResult url=url />
+                <SelectResult url=url set_is_loading_global=set_is_loading />
             </Show>
 
             // download result
