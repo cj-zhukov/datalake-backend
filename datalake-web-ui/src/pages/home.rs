@@ -15,7 +15,7 @@ struct ApiRequest {
 
 #[derive(Debug, Deserialize)]
 struct ApiResponse {
-    pub _result_parquet: Value, //#TODO
+    pub result_parquet: Value, 
     pub result_json: Value,
 }
 
@@ -25,7 +25,8 @@ pub fn Home() -> impl IntoView {
     let (mode, set_mode) = signal(Mode::Select); // mode
     let (is_loading, set_is_loading) = signal(false); // spinner
     let (_result, set_result) = signal(None::<String>); // select result tabular format from select opeation
-    let (url, set_url) = signal(None::<String>); 
+    let (url, set_url) = signal(None::<String>); // json url
+    let (parquet_url, set_parquet_url) = signal(None::<String>); // parquet url
     let (error, set_error) = signal(None::<String>); // error msg
 
     let send_request = move |_| {
@@ -85,18 +86,26 @@ pub fn Home() -> impl IntoView {
                 Mode::Select => {
                     match response.json::<ApiResponse>().await {
                         Ok(resp) => {
-                            let presigned_url = resp
+                            let json_url = resp
                                 .result_json
                                 .as_str()
                                 .expect("result_json is not a string")
                                 .to_string();
 
-                            log!("Presigned url received: {}", presigned_url);
+                            let parquet_url = resp
+                                .result_parquet
+                                .as_str()
+                                .expect("result_parquet is not a string")
+                                .to_string();
+
+                            log!("Presigned json_url received: {}", json_url);
+                            log!("Presigned parquet_url received: {}", parquet_url);
                             log!("Start polling");
 
                             spawn_local(async move {
+                                // Poll JSON
                                 loop {
-                                    let Ok(resp) = Request::get(&presigned_url).send().await else {
+                                    let Ok(resp) = Request::get(&json_url).send().await else {
                                         log!("Still waiting...");
                                         TimeoutFuture::new(1000).await;
                                         continue;
@@ -104,9 +113,21 @@ pub fn Home() -> impl IntoView {
 
                                     if resp.ok() {
                                         log!("Presigned URL is ready");
-                                        set_url.set(Some(presigned_url));
+                                        set_url.set(Some(json_url));
                                         break;
                                     }
+                                }
+
+                                // Poll PARQUET
+                                loop {
+                                    if let Ok(resp) = Request::get(&parquet_url).send().await {
+                                        if resp.ok() {
+                                            log!("PARQUET URL ready");
+                                            set_parquet_url.set(Some(parquet_url.clone()));
+                                            break;
+                                        }
+                                    }
+                                    TimeoutFuture::new(1000).await;
                                 }
                             });
                         },
@@ -117,39 +138,12 @@ pub fn Home() -> impl IntoView {
                     }
                 }
                 _ => unimplemented!()
-                // Mode::Download => match response.json::<ApiResponse>().await {
-                //     Ok(resp) => {
-                //         let presigned_url = resp.result_parquet.to_string();
-                //         log!("Presigned url received: {}", presigned_url);
-                //         log!("Start polling");
-                //         spawn_local(async move {
-                //             loop {
-                //                 let Ok(resp) = Request::get(&presigned_url).send().await else {
-                //                     log!("Still waiting...");
-                //                     TimeoutFuture::new(1000).await;
-                //                     continue;
-                //                 };
-                //                 if resp.ok() {
-                //                     log!("Presigned URL is ready");
-                //                     set_url.set(Some(presigned_url));
-                //                     set_is_loading.set(false);
-                //                     break;
-                //                 }
-                //             }
-                //         });
-                //     }
-                //     Err(e) => {
-                //         set_result.set(None);
-                //         set_error.set(Some(format!("Failed to parse response: {e}")));
-                //         set_is_loading.set(false);
-                //     }
-                // },
             }
         });
     };
 
-    let download_data = move |_| {
-        if let Some(url) = url.get_untracked() {
+    let download_data = move || {
+        if let Some(url) = parquet_url.get_untracked() {
             if let Some(document) = window().document() {
                 match document.create_element("a") {
                     Ok(element) => {
@@ -206,23 +200,34 @@ pub fn Home() -> impl IntoView {
             // error msg
             <ErrorMessage error=error />
 
+            // download parquet button
+            <button
+                style="
+                    padding: 10px 20px;
+                    font-size: 16px;
+                    opacity: {if parquet_url.get().is_some() { 1 } else { 0.5 }};
+                    cursor:  {if parquet_url.get().is_some() { pointer } else { not-allowed }};
+                "
+                disabled=move || parquet_url.get().is_none()
+                on:click=move |_| {
+                    if parquet_url.get().is_some() { download_data(); }
+                }
+            >
+                "⬇ Download"
+            </button>
+
             // operation type
             <OperationPanel
                 mode=mode
                 set_mode=set_mode
                 send_request=send_request
                 is_loading=is_loading
-                modes=vec![Mode::Select, Mode::Download]
+                modes=vec![Mode::Select] // only select mode is available
             />
             
             // select result
             <Show when=move || mode.get() == Mode::Select>
                 <SelectResult url=url set_is_loading_global=set_is_loading />
-            </Show>
-
-            // download result
-            <Show when=move || mode.get() == Mode::Download>
-                <DownloadResult download_data=download_data url=url />
             </Show>
         </div>
     }
